@@ -1,17 +1,37 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
-
-ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-  document.getElementById('root')
+const path = require('path');
+const morgan = require('morgan');
+const express = require('express');
+const { engine } = require('express-handlebars');
+const methodOverride = require('method-override')
+const app = express();
+const port = 3000;
+const route = require('./routes');
+// Connect to DB
+const db = require('./config/db')
+db.connect()
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(morgan('combined'));
+// Apply middleware
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(methodOverride('_method'))
+app.engine(
+    'hbs',
+    engine({
+        extname: 'hbs',
+        helpers: {
+            sum: (a,b) => a + b,
+            formatdate: (date) => date.toLocaleString(),
+        }
+    }),
 );
+app.set('view engine', 'hbs');
+app.set('views', './resources/views');
+app.set('views', path.join(__dirname, 'resources','views'));
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
+// Routes init
+route(app);
+
+app.listen(port, () => {
+    console.log(`App listening at http://localhost:${port}`);
+});
